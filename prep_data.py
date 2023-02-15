@@ -11,8 +11,30 @@ FIELDS_RENAME = {
     'Key field. FIPS county code': 'fips_county_code',
     'Key field. Census tract. Implied decimal point.': 'census_tract',
     'FFIEC Estimated MSA/MD median family income': 'ffiec_estimated_msa_md_median_family_income',
-    'Income indicator, which identifies low, moderate, middle, and upper income areas': 'income_indicator',
+    'Income indicator, which identifies low, moderate, middle, and upper income areas': 'income_category',
+    'Poverty level percent (2 decimal places with decimal point), rounded': 'poverty_rate',
 }
+FIELDS_STRING = [
+    'msa_md_code',
+    'fips_state_code',
+    'fips_county_code',
+    'census_tract',
+]
+FIELDS_INTEGER = [
+    'income_indicator',
+]
+
+def set_field_types(data_dict):
+    type_dict = {}
+    for key, value in data_dict.items():
+        for item in FIELDS_STRING:
+            if item == value:
+                type_dict[key] = 'str'
+        for item in FIELDS_INTEGER:
+            if item == value:
+                type_dict[key] == 'Int64'
+    return type_dict
+
 
 def make_data_dict():
     data_dict = pd.read_excel(
@@ -34,8 +56,9 @@ def main():
         FLAT_FILE_2022_URL,
         compression='zip',
         header=None,
-        nrows=100,
-        storage_options=STORAGE_OPTIONS
+        nrows=100, # REMOVE ME AFTER TESTING!
+        storage_options=STORAGE_OPTIONS,
+        dtype=set_field_types(data_dict),
     )[data_dict.keys()].rename(columns=make_data_dict())
 
     print(df)
