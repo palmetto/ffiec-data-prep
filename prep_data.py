@@ -63,6 +63,13 @@ def main():
 
     print(df)
 
+    print("Saving to ndjson")
+    df.to_json(
+        "ffiec_income_data.ndjson",
+        orient="records",
+        lines=True
+    )
+
     # data_dict = pd.read_excel(
     #     DATA_DICT_2022_URL,
     #     sheet_name='Data Dictionary',
