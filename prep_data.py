@@ -28,7 +28,7 @@ def get_ffiec_data_dict():
         sheet_name='Data Dictionary',
         usecols=['Index', 'Description'],
         storage_options=STORAGE_OPTIONS
-    ).dropna().set_index('Index')['Description']#.apply(transliterate)
+    ).dropna().set_index('Index')['Description']
     data_dict.index = data_dict.index.astype(int) - 1
     data_dict = data_dict[data_dict.isin(FIELDS_RENAME.keys())].replace(FIELDS_RENAME)
     return data_dict.to_dict()
