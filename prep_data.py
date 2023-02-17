@@ -1,6 +1,7 @@
 from typing import Dict
 import argparse
 import pandas as pd
+import numpy as np
 
 
 FLAT_FILE_2022_URL = 'http://www.ffiec.gov/Census/Census_Flat_Files/CensusFlatFile2022.zip'
@@ -11,10 +12,10 @@ FIELDS_RENAME = {
     'Key field. FIPS state code': 'fips_state_code',
     'Key field. FIPS county code': 'fips_county_code',
     'Key field. Census tract. Implied decimal point.': 'census_tract_code',
-    'FFIEC Estimated MSA/MD median family income': 'ffiec_msamd_mfi',
-    'Tract median family income as a percentage of the MSA/MD median family income. 2 decimal places, truncated.': 'mfi_as_percent_of_msamd_mfi',
+    'MSA/MD median family income': 'msamd_median_family_income',
     'Income indicator, which identifies low, moderate, middle, and upper income areas': 'income_indicator',
     'Poverty level percent (2 decimal places with decimal point), rounded': 'poverty_level_percent',
+    'Median family income - tract level': 'median_family_income',
 }
 
 
@@ -70,12 +71,34 @@ def make_tract_geoid(df):
     return df
 
 
-def drop_nulls(df):
-    """ drop rows with any NaN or '999999' tract codes
+def drop_nulls_and_undefined(df):
+    """ drop rows with any of:
+        * NaN income_indicator
+        * NaN poverty_level_percent
+        * '999999' census tract codes
     """
     df = df.dropna(subset=['income_indicator', 'poverty_level_percent'])
     df = df[df['census_tract_code'] != '999999']
     return df
+
+def recode_zeros(df):
+    """ recode zeros to NaNs where appropriate
+    """
+    df.median_family_income = np.where(
+        df.income_indicator.isin([0]),
+        np.nan,
+        df.median_family_income
+    )
+    df.poverty_level_percent = np.where(
+        (
+            df.income_indicator.isin([0])
+            & (df.poverty_level_percent == 0)
+        ),
+        np.nan,
+        df.poverty_level_percent
+    )
+    return df
+
 
 
 def make_low_income_community(df):
@@ -107,9 +130,10 @@ def main():
     df_ffiec = get_ffiec_income_data(data_dict)
 
     # process ffiec data
-    df_ffiec = drop_nulls(df_ffiec)
+    df_ffiec = drop_nulls_and_undefined(df_ffiec)
     df_ffiec = cast_income_indicator(df_ffiec)
     df_ffiec = make_tract_geoid(df_ffiec)
+    df_ffiec = recode_zeros(df_ffiec)
     df_ffiec = make_low_income_community(df_ffiec)
 
     # subset if dev mode
