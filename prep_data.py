@@ -146,7 +146,7 @@ def main():
         .apply(dict, axis=1)
         .to_frame(name='properties')
         .to_json(
-            f"{'ma_' if is_dev else ''}ffiec_income_data.ndjson.gz",
+            f"{'ma_' if is_dev else ''}ffiec_income_profiles.ndjson.gz",
             compression='gzip',
             orient='records',
             lines=True,
